@@ -5,6 +5,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse, parse_qs
 
 import feedparser
 import requests
@@ -35,15 +36,39 @@ def extract_image_url(entry):
         return entry.media_content[0]["url"]
     if "enclosures" in entry and entry.enclosures:
         return entry.enclosures[0]["href"]
-    # fallback: pull first <img src> out of the HTML summary
+
     match = re.search(r'<img[^>]+src="([^"]+)"', entry.get("summary", ""))
-    return match.group(1) if match else None
+    if not match:
+        return None
+
+    thumb_url = match.group(1)
+    # Untappd wraps the full-res image in a thumbnail cropper's url= param — unwrap it
+    parsed = urlparse(thumb_url)
+    qs = parse_qs(parsed.query)
+    if "url" in qs:
+        return qs["url"][0]
+    return thumb_url
 
 
 def clean_text(entry):
-    text = entry.get("title") or entry.get("summary", "")
-    text = re.sub(r"<[^>]+>", "", text)  # strip HTML tags
-    return text.strip()
+    raw_title = entry.get("title", "")
+    match = re.match(r"^.*?is drinking an? (.+?) by\s+(.+?)(?: at (.+))?$", raw_title)
+
+    if match:
+        beer, brewery, location = match.groups()
+        line = f"{beer.strip()} by {brewery.strip()}"
+        if location and location.strip() != "Untappd at Home":
+            line += f" at {location.strip()}"
+    else:
+        line = raw_title.strip()  # fallback if the title doesn't match the usual pattern
+
+    link = entry.get("link", "")
+    parts = [line]
+    if link:
+        parts.append(link)
+    parts.append("via Untappd")
+
+    return "\n\n".join(parts)
 
 
 def post_to_pixelfed(image_url, status_text):
