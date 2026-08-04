@@ -68,7 +68,7 @@ def clean_text(entry):
         parts.append(link)
     parts.append("via Untappd")
 
-    return "\n\n".join(parts)
+    return "\n".join(parts)
 
 
 def post_to_pixelfed(image_url, status_text):
