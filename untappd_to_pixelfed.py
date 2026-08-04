@@ -9,6 +9,7 @@ from urllib.parse import urlparse, parse_qs
 
 import feedparser
 import requests
+from bs4 import BeautifulSoup
 
 STATE_FILE = Path("state.json")
 MAX_HISTORY = 100  # how many processed ids to remember, to avoid duplicate posts
@@ -37,11 +38,12 @@ def extract_image_url(entry):
     if "enclosures" in entry and entry.enclosures:
         return entry.enclosures[0]["href"]
 
-    match = re.search(r'<img[^>]+src="([^"]+)"', entry.get("summary", ""))
-    if not match:
+    soup = BeautifulSoup(entry.get("summary", ""), "html.parser")
+    img = soup.find("img")
+    if not img or not img.get("src"):
         return None
 
-    thumb_url = match.group(1)
+    thumb_url = img["src"]
     # Untappd wraps the full-res image in a thumbnail cropper's url= param — unwrap it
     parsed = urlparse(thumb_url)
     qs = parse_qs(parsed.query)
