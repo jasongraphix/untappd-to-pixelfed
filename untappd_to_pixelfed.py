@@ -68,8 +68,7 @@ def clean_text(entry):
     parts = [line]
     if link:
         parts.append(link)
-    parts.append("via Untappd")
-
+        
     return "\n".join(parts)
 
 
