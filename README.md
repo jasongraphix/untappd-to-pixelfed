@@ -1,4 +1,4 @@
-# untappd-to-pixelfed
+# Untappd to Pixelfed
 
 Cross-posts Untappd checkins to Pixelfed automatically. Runs on a GitHub Actions schedule.
 
