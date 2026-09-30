@@ -68,6 +68,7 @@ def clean_text(entry):
     parts = [line]
     if link:
         parts.append(link)
+        parts.append("🍻 #beer #untappd")
         
     return "\n".join(parts)
 
